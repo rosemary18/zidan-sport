@@ -1,0 +1,14 @@
+POST http://localhost:7878/api/participant/add
+Content-Type: application/json
+
+{
+    "event_id": 1,
+    "data": [
+        {
+            "name": "akjsdak",
+            "contingent": "asnbdad",
+            "category": "ajhsdjahs",
+            "gender": "ahsdjkha"
+        }
+    ]
+}

@@ -1,0 +1,22 @@
+- Setup structure @done
+- Setup socket @done
+- Design database @done
+- layouting
+- tailwind local integration
+- Apis
+    - events routes
+    - participants routes
+    - match routes
+    - bracket routes
+- Front-end
+    - landing view
+    - bracket view
+    - dashboard view
+    - kumite view
+    - scoreboard kumite view
+    - kata view
+    - scoreboard kata view
+    - kata bendera view
+    - scoreboard kata bendera view
+    - jury assesment view
+    - socket client jury assesment integration 

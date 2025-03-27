@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv='cache-control' content='no-cache'> 
+        <meta http-equiv='expires' content='0'> 
+        <meta http-equiv='pragma' content='no-cache'>
+        <title>Kata | Zidan Sport</title>
+        <link rel="shortcut icon" href="/icons/logo.png" type="image/x-icon">
+        <script src="/files/lib/tailwind.js"></script>
+        <link rel="stylesheet" href="/files/css/index.css">
+        <link href='/files/css/boxicons.min.css' rel='stylesheet'>
+        <link href='/files/css/animate.min.css' rel='stylesheet'>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+
+            <!-- Sidebar -->
+            <aside id="sidebar" class="w-64 bg-white p-6 shadow-md flex flex-col fixed h-screen">
+                <h1 class="text-xl font-bold mb-5 flex items-center">
+                    <img src="/icons/logo.png" alt="Logo" class="w-8 h-8 mr-2">  ZIDAN SPORT
+                </h1>
+                <nav>
+                    <ul>
+                        <li class="mb-3 hover:bg-blue-100 rounded-md p-2"><a href="/dashboard" class="flex items-center text-gray-600 hover:text-blue-400"><i class='bx bx-grid-alt mr-2'></i> Dashboard</a></li>
+                        <li class="mb-3 hover:bg-blue-100 rounded-md p-2"><a href="/kumite" class="flex items-center text-gray-600 hover:text-blue-400"><i class='bx bx-dice-2 mr-2'></i> Kumite</a></li>
+                        <li class="mb-3 bg-blue-100 rounded-md p-2"><a href="/kata" class="flex items-center text-blue-400"><i class='bx bx-network-chart mr-2'></i> Kata</a></li>
+                        <li class="mb-3 hover:bg-blue-100 rounded-md p-2"><a href="/katabendera" class="flex items-center text-gray-600 hover:text-blue-400"><i class='bx bx-flag mr-2'></i> Kata Bendera</a></li>
+                        <li class="mb-3 relative p-2">
+                            <button onclick="toggleDropdown()" class="flex items-center text-gray-600 w-full cursor-pointer hover:text-blue-400">
+                                <i class='bx bx-tv mr-2'></i> Scoreboard <i class='bx bx-chevron-down ml-auto'></i>
+                            </button>
+                            <ul id="dropdownMenu" class="hidden bg-[#f5f5f5] mt-4 rounded-md p-2">
+                                <li class="mb-1"><a target="#1" href="/scoreboard/kumite" class="block p-2 hover:bg-blue-100 hover:text-blue-400 text-gray-600 rounded">Kumite</a></li>
+                                <li class="mb-1"><a target="#2" href="/scoreboard/kumite-2" class="block p-2 hover:bg-blue-100 text-gray-600 hover:text-blue-400 rounded">Kumite V2</a></li>
+                                <li class="mb-1"><a target="#3" href="/scoreboard/kata" class="block p-2 hover:bg-blue-100 text-gray-600 hover:text-blue-400 rounded">Kata</a></li>
+                                <li><a target="#4" href="/scoreboard/katabendera" class="block p-2 hover:bg-blue-100 text-gray-600 hover:text-blue-400 rounded">Kata Bendera</a></li>
+                            </ul>
+                        </li>
+                        <li class="mb-3 hover:bg-red-100 rounded-md p-2"><a href="/" class="flex items-center text-gray-600 hover:text-red-400"><i class='bx bx-log-out mr-2'></i> Keluar</a></li>
+                    </ul>
+                </nav>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 p-6 ml-64">
+                
+                <div class="flex justify-between items-center bg-white rounded-lg p-4">
+                    <button onclick="toggleSidebar()" class="md:hidden text-2xl"><i class='bx bx-menu'></i></button>
+                    <h2 class="text-2xl font-semibold" id="title">KATA</h2>
+                </div>
+                
+                <div class="p-4 flex col mt-6 min-h-[80vh]">
+                    
+                </div>
+                
+            </main>
+        </div>
+    </body>
+    <script src="/files/lib/index.js"></script>
+    <script src="/files/lib/kata.js"></script>
+</html>

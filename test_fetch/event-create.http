@@ -1,0 +1,9 @@
+POST http://localhost:7878/api/event/create
+Content-Type: application/json
+
+{
+    "name": "Even D",
+    "location": "aadsasasd dimana sdf",
+    "organizer": "Ini sdf organizer",
+    "date": "12-12-2025"
+}

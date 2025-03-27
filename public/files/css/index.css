@@ -1,0 +1,7 @@
+html, body {
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    font-family: "Roboto", "Helvetica", "Ubuntu", "Open Sans", sans-serif, "Verdana";
+    /* background-color: #f3f3f3; */
+}
