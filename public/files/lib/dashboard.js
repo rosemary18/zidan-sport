@@ -92,11 +92,11 @@ const handlerGetAllParticipants = async () => {
     const data = await res?.json()
 
     if (data?.statusCode == 200) {
+
         STATES.participants = data.data
         STATES.filteredParticipants = data.data
-        STATES.categories = data?.data?.map(d => d?.category)
-        console.log("cates")
-        console.log(STATES.categories)
+        STATES.categories = [...new Set(data?.data?.map(d => d?.category))];
+        
         handlerRenderTable()
     }
 }
@@ -123,23 +123,19 @@ const handlerRenderPagination = () => {
 
 const handlerRenderCategory = () => {
 
-    const category = document.getElementById("category");
-    category.innerHTML = "";
-
-    const _option = document.createElement("option");
-    _option.value = "";
-    _option.text = "Pilih Kategori ...";
-    _option.disabled = true;
-    _option.selected = true;
-    category.appendChild(_option);
+    const category = document.getElementById("category-container");
+    let options = '';
 
     STATES.categories.forEach(d => {
-        const option = document.createElement("option");
-        option.value = d;
-        option.text = d;
-        if (STATES.category == d) option.selected = true
-        category.appendChild(option);
-    });
+        options += `<option value="${d}">${d}</option>`;
+    })
+
+    category.innerHTML = `
+        <input value="${STATES.category}" type="text" autocomplete="off" list="categories" id="category" placeholder="Pilih Kategori..." class="text-gray-500 bg-white border border-[.1px] border-[#dddddd] p-2 rounded shadow-md focus:outline-none mr-4 min-w-75" onchange="handlerFilterTable('category')">
+        <datalist id="categories">
+            ${options}
+        </datalist>
+    `;
 }
 
 const handlerRenderTable = () => {
@@ -148,6 +144,10 @@ const handlerRenderTable = () => {
     let rowsPerPage = parseInt(document.getElementById("perPage").value) || 5;
     const tableBody = document.getElementById("table-body");
     tableBody.innerHTML = "";
+
+    if (STATES.currentPage > Math.ceil(STATES.filteredParticipants.length / rowsPerPage)) {
+        STATES.currentPage = Math.ceil(STATES.filteredParticipants.length / rowsPerPage);
+    }
     
     const start = (STATES.currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
@@ -157,7 +157,7 @@ const handlerRenderTable = () => {
         i = i+1
         const tr = `
             <tr class="bg-opacity-20 hover:bg-gray-200 transition duration-300 cursor-pointer" >
-                <td class="pl-4">
+                <td class="pl-4 bg-white">
                     ${i}
                 </td>
                 <td class="flex px-6 py-4 whitespace-nowrap">
@@ -178,6 +178,16 @@ const handlerRenderTable = () => {
         `;
         tableBody.innerHTML += tr;
     });
+
+    if (STATES.filteredParticipants.length == 0) {
+        tableBody.innerHTML = `
+            <tr class="bg-opacity-20 hover:bg-gray-200 transition duration-300 cursor-pointer" >
+                <td class="pl-4" colspan="8">
+                    <p class="text-center p-4">Tidak ada data peserta</p>
+                </td>
+            </tr>
+        `;
+    }
 
     handlerRenderCategory()
     handlerRenderPagination()
@@ -203,6 +213,7 @@ const handlerFilterTable = (type) => {
     if (type == 'category') {
         STATES.category = document.getElementById("category").value
         if (document.getElementById("category").value == '') {
+            STATES.filteredParticipants = STATES.participants
             document.getElementById("bracket").classList.add("hidden");
             return
         }
@@ -212,10 +223,13 @@ const handlerFilterTable = (type) => {
         );
     } else {
         const query = document.getElementById("search").value.toLowerCase();
-        STATES.filteredParticipants = STATES.filteredParticipants.filter(row => 
-            row?.name.toLowerCase().includes(query) || 
-            row?.contingent.toLowerCase().includes(query)
-        );
+        if (query == '') handlerFilterTable("category")
+        else {
+            STATES.filteredParticipants = STATES.filteredParticipants.filter(row => 
+                row?.name?.toLowerCase()?.includes(query) || 
+                row?.contingent?.toLowerCase()?.includes(query)
+            );
+        }
     }
 
     STATES.currentPage = 1;
@@ -261,7 +275,7 @@ const handlerOnload = async () => {
     STATES.event = JSON.parse(e)
     handlerGetAllParticipants()
 
-    document.getElementById("title").innerText = `DASHBOARD | EVENT ${STATES.event?.name?.toUpperCase()}`
+    document.getElementById("title").innerText = `DASHBOARD | EVENT (${STATES.event?.id}) ${STATES.event?.name?.toUpperCase()}`
 
 }
 

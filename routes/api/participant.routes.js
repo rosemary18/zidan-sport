@@ -7,7 +7,7 @@ const abs_path = conf.base_path + '/participant'
 
 const handlerGetAllParticipants = async (req, res) => {
     
-    const sql_participants = `SELECT * FROM tbl_participants`;
+    const sql_participants = `SELECT * FROM tbl_participants ORDER BY category ASC`;
     const participants = await new Promise((resolve, reject) => {
         db.all(sql_participants, function (err, rows) {
             if (err) {
@@ -24,9 +24,28 @@ const handlerGetAllParticipants = async (req, res) => {
 const handlerGetParticipantByEventId = async (req, res) => {
 
     const eventId = req.params.id;
-    const sql_participants = `SELECT * FROM tbl_participants WHERE event_id = ? ORDER BY create_at DESC`;
+    const sql_participants = `SELECT * FROM tbl_participants WHERE event_id = ? ORDER BY category ASC`;
     const participants = await new Promise((resolve, reject) => {
         db.all(sql_participants, [eventId], function (err, rows) {
+            if (err) {
+                console.log(err);
+                return reject(new Error('Database query error'));
+            }
+            resolve(rows);
+        });
+    })
+
+    return res.response(RES_TYPES[200](participants));
+}
+
+const handlerGetParticipantByCategory = async (req, res) => {
+
+    const eventId = req.params?.eventId;
+    const category = decodeURIComponent(req.params?.category || '');
+    
+    const sql_participants = `SELECT * FROM tbl_participants WHERE event_id = ? AND category = ? ORDER BY create_at DESC`;
+    const participants = await new Promise((resolve, reject) => {
+        db.all(sql_participants, [eventId, category], function (err, rows) {
             if (err) {
                 console.log(err);
                 return reject(new Error('Database query error'));
@@ -93,6 +112,11 @@ const routes = [
         method: FETCH_REQUEST_TYPES.GET,
         path: abs_path,
         handler: handlerGetAllParticipants
+    },
+    {
+        method: FETCH_REQUEST_TYPES.GET,
+        path: abs_path + '/category/{eventId}/{category}',
+        handler: handlerGetParticipantByCategory
     },
     {
         method: FETCH_REQUEST_TYPES.GET,

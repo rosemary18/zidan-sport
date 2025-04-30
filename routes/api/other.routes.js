@@ -49,7 +49,7 @@ const routes = [
         method: FETCH_REQUEST_TYPES.GET,
         path: '/bracket',
         handler: (h, r) => {
-            return r.file(Path.join(__dirname, '../../public/files/bracket.html'))
+            return r.file(Path.join(__dirname, '../../public/files/bracket-2.html'))
         }
     },
     {

@@ -6,13 +6,14 @@ const STATES = {
 const Start = async () => {
     
     await handlerGetAllEvents()
+    renderTable()
 }
 
 // Services
 
 const handlerGetAllEvents = async (render = true) => {
 
-    fetch('/api/event', {
+    await fetch('/api/event', {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -24,12 +25,13 @@ const handlerGetAllEvents = async (render = true) => {
         if (res?.statusCode == 200) {
             STATES.events = res.data
             STATES.filteredEvents = res.data
-            renderTable()
         }
     })
 }
 
-const handlerDeleteEvent = async (eventId) => {
+const handlerDeleteEvent = async (event, eventId) => {
+
+    event.stopPropagation();
 
     let conf = confirm("Apakah anda yakin ingin menghapus event ini?")
     if (!conf) return
@@ -42,9 +44,9 @@ const handlerDeleteEvent = async (eventId) => {
         }
     })
     .then(res => res.json())
-    .then(res => {
+    .then(async res => {
         if (res?.statusCode == 200) {
-            handlerGetAllEvents()
+            Start()
             localStorage.removeItem("event")
         }
     })
@@ -52,7 +54,7 @@ const handlerDeleteEvent = async (eventId) => {
 
 const handlerAddEvent = async () => {
 
-    fetch('/api/event/create', {
+    await fetch('/api/event/create', {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -64,16 +66,16 @@ const handlerAddEvent = async () => {
             organizer: document.getElementById("organizer").value,
             date: document.getElementById("date").value
         })
-    })
-    .then(res => res.json())
-    .then(res => {
+    }).then(res => res.json())
+    .then(async res => {
         if (res?.statusCode == 200) {
             alert("Event berhasil ditambahkan!")
-            handlerGetAllEvents()
             document.getElementById("name").value = ""
             document.getElementById("location").value = ""
             document.getElementById("organizer").value = ""
             document.getElementById("date").value = ""
+            if (STATES.events?.length == 0) location.reload()
+            else Start()
         }
     })
 }
@@ -88,9 +90,10 @@ const handlerGetIntoEvent = async (eventId) => {
 function openModal() {
     document.getElementById("modal").classList.remove("hidden");
 }
+
 function closeModal(submit) {
-    if (submit) handlerAddEvent()
     document.getElementById("modal").classList.add("hidden");
+    if (submit) setTimeout(handlerAddEvent, 300);
 }
 
 let currentPage = 1;
@@ -103,16 +106,25 @@ function renderTable() {
     rowsPerPage = parseInt(document.getElementById("perPage").value);
     const tableBody = document.getElementById("table-body");
     tableBody.innerHTML = "";
+
+    if (currentPage > Math.ceil(STATES.filteredEvents.length / rowsPerPage)) {
+        currentPage = Math.ceil(STATES.filteredEvents.length / rowsPerPage);
+    }
     
     const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const pageData = STATES.filteredEvents.slice(start, end);
+
+    console.log(rowsPerPage)
+    console.log(start)
+    console.log(end)
+    console.log(pageData)
     
     pageData.forEach(row => {
         i = i+1
         const tr = `
             <tr class="bg-opacity-20 hover:bg-gray-200 transition duration-300 cursor-pointer" onclick="handlerGetIntoEvent(${row?.id})">
-                <td class="pl-4">
+                <td class="pl-4 bg-white">
                     ${i}
                 </td>
                 <td class="flex px-6 py-4 whitespace-nowrap">
@@ -128,25 +140,42 @@ function renderTable() {
                     ${row?.date || "-"}
                 </td>
                 <td class="pl-4">
-                    <svg class="w-4 fill-current text-red-500 cursor-pointer" onclick="handlerDeleteEvent(${row?.id})" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <svg class="w-4 fill-current text-red-500 cursor-pointer" onclick="handlerDeleteEvent(event, ${row?.id})" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                     </svg>
                 </td>
             </tr>
         `;
+
         tableBody.innerHTML += tr;
     });
+
+    if (STATES.filteredEvents.length == 0) {
+        tableBody.innerHTML = `
+            <tr class="bg-opacity-20 hover:bg-gray-200 transition duration-300 cursor-pointer" >
+                <td class="pl-4" colspan="8">
+                    <p class="text-center p-4">Tidak ada data events</p>
+                </td>
+            </tr>
+        `;
+    }
+
     renderPagination();
 }
 
 function filterTable() {
+    
     const query = document.getElementById("search").value.toLowerCase();
-    STATES.filteredEvents = STATES.events.filter(row => 
-        row?.name.toLowerCase().includes(query) || 
-        row?.location.toLowerCase().includes(query) || 
-        row?.date.toLowerCase().includes(query) || 
-        row?.organizer.toLowerCase().includes(query)
-    );
+    if (query == '') STATES.filteredEvents = STATES.events
+    else {
+        STATES.filteredEvents = STATES.events.filter(row => 
+            row?.name.toLowerCase().includes(query) || 
+            row?.location.toLowerCase().includes(query) || 
+            row?.date.toLowerCase().includes(query) || 
+            row?.organizer.toLowerCase().includes(query)
+        );
+    }
+
     currentPage = 1;
     renderTable();
 }
@@ -177,4 +206,3 @@ function renderPagination() {
 }
 
 Start()
-renderTable();

@@ -1,0 +1,20 @@
+POST http://localhost:7878/api/match/create
+Content-Type: application/json
+
+{
+    "event_id": 18,
+    "category": "KATA JUNIOR PUTRA",
+    "winner_id": 96,
+    "arena": "TATAMI 4",
+    "time": "4 Menit",
+    "participants": [
+        {
+            "id": 87,
+            "grade": "[7, 7, 7, 7]"
+        },
+        {
+            "id": 96,
+            "grade": "[7, 7, 6, 7]"
+        }
+    ]
+}

@@ -15,11 +15,40 @@
         <link href='/files/css/animate.min.css' rel='stylesheet'>
     </head>
     <body class="flex flex-1 flex-col h-screen bg-[#f5f5f5]">
+        <div id="loadingModal" class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-70 backdrop-blur-md z-[99]">
+            <div class="relative flex items-center justify-center">
+                <div class="absolute w-36 h-36 border-4 border-transparent border-t-blue-400 rounded-full animate-spin"></div>
+                <div class="absolute w-28 h-28 border-4 border-transparent border-b-purple-400 rounded-full animate-spin"></div>
+                <div class="absolute w-20 h-20 border-4 border-transparent border-l-cyan-400 rounded-full animate-spin"></div>
+                <div class="absolute w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full shadow-xl animate-pulse"></div>
+                <div class="absolute w-4 h-4 bg-white rounded-full shadow-lg animate-bounce"></div>
+            </div>
+        </div>
         <canvas id="bracket-connectors" class="absolute top-0 left-0 pointer-events-none"></canvas>
         <h1 id="title" class="self-center text-gray-800 text-2xl text-center font-bold m-6"></h1>
         <div class="flex flex-1 flex-row">
-            <div id="content" class="flex flex-1 flex-col p-8 justify-center items-center"></div>
-            <div class="w-[20em]"></div>
+            <div id="content" class="flex flex-1 justify-center items-center"></div>
+            <div class="w-[24em]">
+                <div class="max-w-lg m-4 p-6 py-14 pl-10">
+                    <h2 class="text-2xl font-semibold text-gray-700 text-center mb-6 pb-2">
+                        🏆   Daftar Pemenang
+                    </h2>
+                    <ul class="space-y-5">
+                        <li class="flex items-center justify-between rounded-lg p-4 bg-white text-gray-500 shadow-md">
+                            <span class="font-semibold">🥇 -</span>
+                        </li>
+                        <li class="flex items-center justify-between rounded-lg p-4 bg-white text-gray-500 shadow-md">
+                            <span class="font-semibold">🥈 -</span>
+                        </li>
+                        <li class="flex items-center justify-between rounded-lg p-4 bg-white text-gray-500 shadow-md">
+                            <span class="font-semibold">🥉 -</span>
+                        </li>
+                        <li class="flex items-center justify-between rounded-lg p-4 bg-white text-gray-500 shadow-md">
+                            <span class="font-semibold">🎖️ -</span>
+                        </li>
+                    </ul>
+                </div>                 
+            </div>
         </div>
         <div class="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-5 pointer-events-none" style="background-image: url('/icons/logo.png');background-size: 55em;"></div>
     </body>

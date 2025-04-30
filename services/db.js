@@ -36,6 +36,7 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         event_id INTEGER,
         winner_id INTEGER,
+        match_type TEXT,
         category TEXT,
         time TEXT, -- Bisa dalam format jam (HH:MM:SS)
         arena TEXT,

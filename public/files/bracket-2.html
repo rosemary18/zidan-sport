@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv='cache-control' content='no-cache'> 
+        <meta http-equiv='expires' content='0'> 
+        <meta http-equiv='pragma' content='no-cache'>
+        <title>Bagan | Zidan Sport</title>
+        <link rel="shortcut icon" href="/icons/logo.png" type="image/x-icon">
+        <script src="/files/lib/tailwind.js"></script>
+        <link rel="stylesheet" href="/files/css/index.css">
+        <link href='/files/css/boxicons.min.css' rel='stylesheet'>
+        <link href='/files/css/animate.min.css' rel='stylesheet'>
+        <script src='/files/lib/jspdf.umd.min.js'></script>
+        <script src='/files/lib/html2canvas-pro.min.js'></script>
+    </head>
+    <body class="flex h-screen bg-[#ffffff]">
+        <div id="loadingModal" class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-70 backdrop-blur-md z-[99]">
+            <div class="relative flex items-center justify-center">
+                <div class="absolute w-36 h-36 border-4 border-transparent border-t-blue-400 rounded-full animate-spin"></div>
+                <div class="absolute w-28 h-28 border-4 border-transparent border-b-purple-400 rounded-full animate-spin"></div>
+                <div class="absolute w-20 h-20 border-4 border-transparent border-l-cyan-400 rounded-full animate-spin"></div>
+                <div class="absolute w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full shadow-xl animate-pulse"></div>
+                <div class="absolute w-4 h-4 bg-white rounded-full shadow-lg animate-bounce"></div>
+            </div>
+        </div>
+        <div class="flex flex-col flex-1">
+            <h1 id="title" class="self-center text-gray-800 text-2xl text-center font-bold m-6"></h1>
+            <div class="flex flex-1 flex-row">
+                <div class="flex flex-1 flex-col">
+                    <div id="capture-bracket" class="ml-8 mt-10">
+                        <canvas id="bracket-connectors" class="absolute inset-0 top-0 left-0 pointer-events-none z-[99]"></canvas>
+                        <div id="content" class="flex flex-1 items-center pb-40"></div>
+                    </div>
+                </div>
+                <div id="winners" class="w-[24em] hidden"></div>
+            </div>
+            <div class="absolute fixed inset-0 bg-center bg-no-repeat bg-contain opacity-5 pointer-events-none" style="background-image: url('/icons/logo.png');background-size: 55em;"></div>
+        </div>
+    </body>
+    <script src="/files/lib/bracket-2.js"></script>
+</html>

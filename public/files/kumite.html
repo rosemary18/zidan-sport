@@ -15,7 +15,9 @@
         <link href='/files/css/animate.min.css' rel='stylesheet'>
     </head>
     <body class="bg-gray-100">
-        <div class="flex h-screen">
+        <div class="flex h-screen relative">
+
+            <div id="modal" class="fixed inset-0 bg-[#00000080] flex justify-center items-center z-[99] hidden"></div>
 
             <!-- Sidebar -->
             <aside id="sidebar" class="w-64 bg-white p-6 shadow-md flex flex-col fixed h-screen">
@@ -47,17 +49,72 @@
             <!-- Main Content -->
             <main class="flex-1 p-6 ml-64">
                 
-                <div class="flex justify-between items-center bg-white rounded-lg p-4">
-                    <button onclick="toggleSidebar()" class="md:hidden text-2xl"><i class='bx bx-menu'></i></button>
+                <div id="header" class="flex justify-between items-center bg-white rounded-lg p-4">
                     <h2 class="text-2xl font-semibold" id="title">KUMITE</h2>
+                    <div class="flex hidden" id="match-handler">
+                        <button class="p-2 px-[.68em] bg-red-600 text-white rounded-full hover:bg-red-500 flex items-center" onclick="handlerDeleteStageMatch()">
+                            <i class='bx bx-x text-2xl'></i>
+                        </button>
+                        <button class="py-2 px-3 bg-green-600 text-white rounded-lg hover:bg-green-500 flex items-center text-lg ml-2" onclick="handlerSaveMatch()">
+                            <i class='bx bx-save mr-2'></i> Simpan
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="p-4 flex col mt-6 min-h-[80vh]">
-                    
+            
+                <div id="main-content" class="flex flex-col my-6 pb-6 min-h-[80vh] hidden">
+                    <div class="flex justify-between mb-4">
+                        <div class="flex flex-row flex-1">
+                            <input type="text" id="search" placeholder="Cari..." class="text-gray-500 pl-3 bg-white border border-[.1px] border-[#dddddd] p-2 rounded w-1/3 shadow-md focus:outline-none" onkeyup="handlerFilterTable('category')">
+                        </div>
+                        <button id="creatematch" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded shadow mt-[1px] flex items-center mr-3 hidden" title="Buat pertandingan ..." onclick="handlerRenderFormModal()">
+                            <i class="bx bx-plus"></i>
+                        </button>
+                        <div id="category-container"></div>
+                        <select id="perPage" class="text-gray-500 bg-white border border-[.1px] border-[#dddddd] p-2 rounded shadow-md focus:outline-none" onchange="handlerRenderTable()">
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col mt-2">
+                        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                                <table class="min-w-full text-sm text-gray-500 shadow-md overflow-hidden rounded-lg">
+                                    <thead class="bg-white text-xs uppercase font-medium">
+                                        <tr>
+                                            <th>No</th>
+                                            <th scope="col" class="px-6 py-3 text-left tracking-wider" onclick="handlerSortTable('arena')">
+                                                Tatami <i class="bx bx-sort"> 
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left tracking-wider" onclick="handlerSortTable('category')">
+                                                Kategori <i class="bx bx-sort"> 
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left tracking-wider">
+                                                Peserta 1
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left tracking-wider">
+                                                Peserta 2
+                                            </th>
+                                            <th scope="col" class="px-3 py-3 text-left tracking-wider">
+                                                Aksi
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-[#f4f4f4]" id="table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-6 space-x-2" id="pagination"></div>
                 </div>
-                
+
+                <div id="match-content" class="flex flex-col my-6 pb-6 min-h-[80vh] hidden">
+                </div>
+
             </main>
         </div>
     </body>
+    <script src="/files/lib/index.js"></script>
     <script src="/files/lib/kumite.js"></script>
 </html>
