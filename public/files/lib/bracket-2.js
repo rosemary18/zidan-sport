@@ -524,6 +524,7 @@ const handlerUpdateBracket = async () => {
 const handlerReshuffleBrackets = () => {
 
     STATES.brackets = generateBracket(STATES.participants, STATES.brackets?.length <= 16 ? bracket16 : bracket32)
+    // STATES.brackets = generateBracket(STATES.participants, bracket32)
     handlerUpdateBracket()
     renderBracket()
 }
@@ -837,13 +838,25 @@ const handlerDownloadPDF = () => {
         logo.src = '/icons/logo.png';
         logo.crossOrigin = "Anonymous";
 
-        const imgData = canvas.toDataURL("image/png");
-        const isPortrait = window.innerWidth <= window.innerHeight;
+        const originalWidth = canvas.width;
+        const originalHeight = canvas.height;
+
+        const cropWidth = originalWidth * 0.9;
+        const cropHeight = originalHeight;
+
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = cropWidth;
+        croppedCanvas.height = cropHeight;
+
+        const ctx = croppedCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+
+        const imgData = croppedCanvas.toDataURL("image/png");
 
         const pdf = new window.jspdf.jsPDF({
-            orientation: isPortrait ? "portrait" : "landscape",
+            orientation: "landscape",
             unit: "px",
-            format: [((canvas.height * (STATES.participants?.length > 16 ? 810 : 780)) / canvas.width), 800]
+            format: [595, 842]
         });
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -852,7 +865,7 @@ const handlerDownloadPDF = () => {
         const imgWidth = pdfWidth;
         const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        let heightLeft = isPortrait ? imgHeight : pdfHeight;
+        let heightLeft = pdfHeight;
         let position = 0;
 
         const margin = 10;
@@ -883,7 +896,7 @@ const handlerDownloadPDF = () => {
 
         position = y;
 
-        pdf.addImage(imgData, "PNG", 2, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", 2, position, 880, 600);
         pdf.addImage(logo, "PNG", pdfWidth - margin - 88, 20, 100, 100);
         heightLeft = imgHeight - (pdfHeight - position);
 
@@ -895,7 +908,6 @@ const handlerDownloadPDF = () => {
         //     pdf.addPage();
         //     heightLeft -= pdfHeight;
         // }
-
         
         const startX = pdfWidth - margin - 150;
         const startY = pdfHeight - margin - 48;
@@ -950,6 +962,7 @@ const renderBracket = () => {
 
     let row1 = ""
     let row2 = ""
+    let is16 = STATES.participants?.length <= 16
 
     if (STATES.brackets.length > 1) {
         row1 += `<div class="flex">`
@@ -962,15 +975,16 @@ const renderBracket = () => {
                     if (matches?.length > 0) {
                         for (let k = 0; k < matches.length; k++) {
                             const participant = matches[k]?.participant
+                            const m = k%2 == 0
                             row1 += `<div class="flex flex-col ${i > 0 ? 'flex-[.6] justify-center' : ''} overflow-visible"><div id='${i}-${j}-${k}' class="w-60 text-white my-1 mx-[1em] overflow-visible">`
                             if (participant == null || Object.keys(participant).length == 0) {
                                 row1 += `
-                                    <div id="${i}-${j}-${k}" class="flex bg-gradient-to-r from-[${ (k%2 == 0) ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] overflow-hidden border-t-2 border-b-2 border-l-2 border-t-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] min-h-[1.7em]" allowdrop="true" ondrop="handlerDrop(event)" ondragover="handlerAllowDrop(event)">
+                                    <div id="${i}-${j}-${k}" class="${(is16 && i == 0) ? 'my-2' : ''} flex bg-gradient-to-r from-[${ (k%2 == 0) ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] overflow-hidden border-t-2 border-b-2 border-l-2 border-t-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] min-h-[1.7em]" allowdrop="true" ondrop="handlerDrop(event)" ondragover="handlerAllowDrop(event)">
                                     </div>
                                 `
                             } else {
                                 row1 += `
-                                    <div id="${i}-${j}-${k}" class="bg-gradient-to-r from-[${ (k%2 == 0) ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] hover:cursor-pointer hover:bg-gray-600 border-t-2 overflow-visible border-b-2 border-l-2 border-t-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] min-h-[1.7em] relative" draggable="true" allowdrop="true" ondragover="handlerAllowDrop(event)" ondragstart="handlerDragStart(event)" ondragend="handlerDragEnd(event)" ondrop="handlerDrop(event)" ondblclick="handlerClear(event)">
+                                    <div id="${i}-${j}-${k}" class="${(is16 && i == 0) ? 'my-2' : ''} bg-gradient-to-r from-[${ (k%2 == 0) ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] hover:cursor-pointer hover:bg-gray-600 border-t-2 overflow-visible border-b-2 border-l-2 border-t-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) ? '#eb3434' : '#3437eb'}] min-h-[1.7em] relative" draggable="true" allowdrop="true" ondragover="handlerAllowDrop(event)" ondragstart="handlerDragStart(event)" ondragend="handlerDragEnd(event)" ondrop="handlerDrop(event)" ondblclick="handlerClear(event)">
                                         <span id="name-${i}-${j}-${k}" class="absolute top-[.4em] left-[.4em] text-left text-xs text-black font-semibold whitespace-nowrap">${participant.name} - ${participant.contingent?.toUpperCase()}</span>
                                     </div>
                                 `
@@ -991,12 +1005,12 @@ const renderBracket = () => {
                             row2 += `<div class="flex flex-col ${i > 0 ? 'flex-[.6] justify-center' : ''} overflow-visible"><div id='${i}-${j}-${k}' class="w-60 text-white my-1 mx-[1em] overflow-visible">`
                             if (participant == null || Object.keys(participant).length == 0) {
                                 row2 += `
-                                    <div id="${i}-${j}-${k}" class="flex bg-gradient-to-r from-[${ (k%2 == 0) && matches.length > 1 ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] overflow-hidden border-t-2 border-b-2 border-l-2 border-t-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] min-h-[1.7em]" allowdrop="true" ondrop="handlerDrop(event)" ondragover="handlerAllowDrop(event)">
+                                    <div id="${i}-${j}-${k}" class="${(is16 && i == 0) ? 'my-2' : ''} flex bg-gradient-to-r from-[${ (k%2 == 0) && matches.length > 1 ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] overflow-hidden border-t-2 border-b-2 border-l-2 border-t-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] min-h-[1.7em]" allowdrop="true" ondrop="handlerDrop(event)" ondragover="handlerAllowDrop(event)">
                                     </div>
                                 `
                             } else {
                                 row2 += `
-                                    <div id="${i}-${j}-${k}" class="bg-gradient-to-r from-[${ (k%2 == 0) && matches.length > 1 ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] hover:cursor-pointer hover:bg-gray-600 border-t-2 overflow-visible border-b-2 border-l-2 border-t-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] min-h-[1.7em] relative" draggable="true" allowdrop="true" ondragover="handlerAllowDrop(event)" ondragstart="handlerDragStart(event)" ondragend="handlerDragEnd(event)" ondrop="handlerDrop(event)" ondblclick="handlerClear(event)">
+                                    <div id="${i}-${j}-${k}" class="${(is16 && i == 0) ? 'my-2' : ''} bg-gradient-to-r from-[${ (k%2 == 0) && matches.length > 1 ? '#eb343480' : '#3437eb80'}] to-[#ffffff33] hover:cursor-pointer hover:bg-gray-600 border-t-2 overflow-visible border-b-2 border-l-2 border-t-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-b-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] border-l-[${ (k%2 == 0) && matches.length > 1 ? '#eb3434' : '#3437eb'}] min-h-[1.7em] relative" draggable="true" allowdrop="true" ondragover="handlerAllowDrop(event)" ondragstart="handlerDragStart(event)" ondragend="handlerDragEnd(event)" ondrop="handlerDrop(event)" ondblclick="handlerClear(event)">
                                         <span id="name-${i}-${j}-${k}" class="absolute top-[.4em] left-[.4em] text-left text-xs text-black font-semibold whitespace-nowrap">${participant.name} - ${participant.contingent?.toUpperCase()}</span>
                                     </div>
                                 `
@@ -1047,7 +1061,7 @@ const renderBracket = () => {
                 <span class="text-lg font-medium">Tab Pemenang</span>
             </div>
             ${
-                (STATES.participants?.length <= 0) ? `
+                (STATES.participants?.length == 16) ? `
                     <div class="flex items-center space-x-3 ml-4">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input id="bracket-type" ${STATES.brackets.length == 4 ? '' : 'checked'} type="checkbox" onchange="handlerToggleBracket()" class="sr-only peer">
