@@ -199,6 +199,7 @@ const handlerExportRecapitulation = async (req, res) => {
                     const { winner_id, winner_name, contingent, participants, ...matchData } = row;
                     return {
                         ...matchData,
+                        winner_id,
                         participants: JSON.parse(participants),
                         winner: winner_id ? {
                             id: winner_id,
