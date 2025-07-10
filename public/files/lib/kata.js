@@ -21,8 +21,8 @@ const handlerGetAllParticipants = async () => {
     const data = await res?.json()
 
     if (data?.statusCode == 200) {
-        STATES.participants = data.data
-        STATES.categories = [...new Set(data?.data?.filter(d => d?.category?.includes("KATA")).map(d => d?.category))];
+        STATES.participants = data.data?.participants
+        STATES.categories = [...new Set(data?.data?.participants?.filter(d => d?.category?.includes("KATA")).map(d => d?.category))];
     }
 }
 
@@ -44,11 +44,12 @@ const handlerCloseModal = (add) => {
     const category = document.getElementById("category");
     const participant1 = document.getElementById("participant-1");
     const participant2 = document.getElementById("participant-2");
+    const isFinal = document.getElementById("is-final");
     const tatami = document.getElementById("tatami");
     const modal = document.getElementById("modal");
 
     if (add) {
-        if (category.value == '' || (participant1.value == '' && participant2.value == '') || tatami.value == '') {
+        if (category.value == '' || participant1.value == '' || participant2.value == '' || tatami.value == '') {
             alert('Data belum lengkap!');
             return
         }
@@ -58,6 +59,7 @@ const handlerCloseModal = (add) => {
     modal.classList.add("hidden");
 
     if (add) {
+
         const stageKata = {
             id: Math.floor(Math.random() * 1000000),
             match_id: Math.random().toString(36).substring(2, 6).toUpperCase(),
@@ -67,7 +69,9 @@ const handlerCloseModal = (add) => {
             tatami: tatami.value,
             time: 0,
             play: false,
-            rest: false
+            rest: false,
+            is_final: isFinal.checked,
+            active_player: 0
         }
 
         if (participant1.value?.split('|')?.[0]) {
@@ -83,7 +87,7 @@ const handlerCloseModal = (add) => {
                 c3: true,
                 c4: true,
                 c5: true,
-                point: 0
+                point: 0,
             })
         } else stageKata.participants.push(null)
 
@@ -100,7 +104,7 @@ const handlerCloseModal = (add) => {
                 c3: true,
                 c4: true,
                 c5: true,
-                point: 0
+                point: 0,
             })
         } else stageKata.participants.push(null)
 
@@ -258,6 +262,13 @@ const handlerToggleCheckbox = (n) => {
     if (document.getElementById(`w-1`).checked || document.getElementById(`w-2`).checked) localStorage.setItem("confetti_kata", `win-${n == 1 ? 'red' : 'blue'}-${Math.floor(Math.random() * 1000)}`)
 }
 
+const handlerTogglePerform = (n) => {
+    
+    STATES.stageKata.active_player = n
+    localStorage.setItem("stage_kata", JSON.stringify(STATES.stageKata))
+    handlerRenderMatch()
+}
+
 const handlerSetPoint = () => {
 
     STATES.stageKata?.participants?.forEach((item, i) => {
@@ -328,31 +339,21 @@ const handlerRenderMatch = () => {
     document.getElementById("match-content").innerHTML = `
         <div class="flex text-white">
             ${
-                STATES.stageKata.participants[0] != null ? `
-                    <div class="flex flex-1 flex-col justify-center items-center p-10 min-h-[30em] bg-red-600 rounded-md relative">
-                        ${
-                            STATES.stageKata.participants[1] != null ? `
-                                <div class="absolute bottom-4 right-4 flex items-center justify-center">
-                                    <span class="text-xl">🏆</span>
-                                    <input id="w-1" type="checkbox" onclick="handlerToggleCheckbox(1)" class="w-5 h-5 ml-2 shadowed">
-                                </div>
-                            ` : ''
-                        }
-                        <h1 class="text-4xl font-bold line-clamp-1">${STATES.stageKata?.participants[0]?.name}</h1>
-                        <h2 class="text-2xl font-bold">(${STATES.stageKata?.participants[0]?.contingent})</h2>
-                        <h1 class="text-[10em] font-extrabold mt-2">${STATES.stageKata?.participants[0]?.point}</h1>
-                    </div>
-                ` : ''
-            }
-            ${ STATES.stageKata.participants[0] == null || STATES.stageKata.participants[1] == null ? '' : '<div class="mx-3"></div>' }
-            ${
                 STATES.stageKata.participants[1] != null ? `
                     <div class="flex flex-1 flex-col justify-center items-center p-10 min-h-[30em] bg-blue-600 rounded-md relative">
                         ${
+                            STATES.stageKata.is_final ? `
+                                <div class="absolute bottom-12 right-4 flex items-center justify-center">
+                                    <span class="text-xl">Perform</span>
+                                    <input id="p-2" type="checkbox" ${STATES.stageKata.active_player == 1 ? 'checked' : ''} onclick="handlerTogglePerform(1)" class="w-5 h-5 ml-2 shadowed">
+                                </div>
+                            ` : ''
+                        }
+                        ${
                             STATES.stageKata.participants[0] != null ? `
-                                <div class="absolute bottom-4 left-4 flex items-center justify-center">
-                                    <input id="w-2" type="checkbox" onclick="handlerToggleCheckbox(2)" class="w-5 h-5 mr-2 shadowed">
+                                <div class="absolute bottom-4 right-4 flex items-center justify-center">
                                     <span class="text-xl">🏆</span>
+                                    <input id="w-2" type="checkbox" onclick="handlerToggleCheckbox(2)" class="w-5 h-5 ml-2 shadowed">
                                 </div>
                             ` : ''
                         }
@@ -362,35 +363,35 @@ const handlerRenderMatch = () => {
                     </div>
                 ` : ''
             }
+            ${ STATES.stageKata.participants[0] == null || STATES.stageKata.participants[1] == null ? '' : '<div class="mx-2"></div>' }
+            ${
+                STATES.stageKata.participants[0] != null ? `
+                    <div class="flex flex-1 flex-col justify-center items-center p-10 min-h-[30em] bg-red-600 rounded-md relative">
+                        ${
+                            STATES.stageKata.is_final ? `
+                                <div class="absolute bottom-12 left-4 flex items-center justify-center">
+                                    <input id="p-1" type="checkbox" ${STATES.stageKata.active_player == 0 ? 'checked' : ''} onclick="handlerTogglePerform(0)" class="w-5 h-5 mr-2 shadowed">
+                                    <span class="text-xl">Perform</span>
+                                </div>
+                            ` : ''
+                        }
+                        ${
+                            STATES.stageKata.participants[1] != null ? `
+                                <div class="absolute bottom-4 left-4 flex items-center justify-center">
+                                    <input id="w-1" type="checkbox" onclick="handlerToggleCheckbox(1)" class="w-5 h-5 mr-2 shadowed">
+                                    <span class="text-xl">🏆</span>
+                                </div>
+                            ` : ''
+                        }
+                        <h1 class="text-4xl font-bold line-clamp-1">${STATES.stageKata?.participants[0]?.name}</h1>
+                        <h2 class="text-2xl font-bold">(${STATES.stageKata?.participants[0]?.contingent})</h2>
+                        <h1 class="text-[10em] font-extrabold mt-2">${STATES.stageKata?.participants[0]?.point}</h1>
+                    </div>
+                ` : ''
+            }
         </div>
     
         <div class="grid ${(STATES.stageKata.participants[0] != null && STATES.stageKata.participants[1] != null) ? 'grid-cols-2' : 'grid-cols-1'} gap-3 my-6">
-            ${
-                STATES.stageKata.participants[0] != null ? `
-                    <div class="flex justify-center items-center flex-wrap gap-3 bg-red-100 p-4 rounded-lg">
-                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
-                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c1 ? 'checked' : ''} onclick="handlerToggleField(0, 1)" class="w-4 h-4 m-3">
-                            <input id="g-0-1" type="text" value="${STATES.stageKata.participants[0]?.g1 != 0 ? STATES.stageKata.participants[0]?.g1 : ''}" onchange="handlerSetGrade(0, 1)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J1" />
-                        </div>
-                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
-                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c2 ? 'checked' : ''} onclick="handlerToggleField(0, 2)" class="w-4 h-4 m-3">
-                            <input id="g-0-2" type="text" value="${STATES.stageKata.participants[0]?.g2 != 0 ? STATES.stageKata.participants[0]?.g2 : ''}" onchange="handlerSetGrade(0, 2)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J2" />
-                        </div>
-                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
-                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c3 ? 'checked' : ''} onclick="handlerToggleField(0, 3)" class="w-4 h-4 m-3">
-                            <input id="g-0-3" type="text" value="${STATES.stageKata.participants[0]?.g3 != 0 ? STATES.stageKata.participants[0]?.g3 : ''}" onchange="handlerSetGrade(0, 3)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J3" />
-                        </div>
-                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
-                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c4 ? 'checked' : ''} onclick="handlerToggleField(0, 4)" class="w-4 h-4 m-3">
-                            <input id="g-0-4" type="text" value="${STATES.stageKata.participants[0]?.g4 != 0 ? STATES.stageKata.participants[0]?.g4 : ''}" onchange="handlerSetGrade(0, 4)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J4" />
-                        </div>
-                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
-                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c5 ? 'checked' : ''} onclick="handlerToggleField(0, 5)" class="w-4 h-4 m-3">
-                            <input id="g-0-5" type="text" value="${STATES.stageKata.participants[0]?.g5 != 0 ? STATES.stageKata.participants[0]?.g5 : ''}" onchange="handlerSetGrade(0, 5)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J5" />
-                        </div>
-                    </div>                
-                ` : ''
-            }
             ${
                 STATES.stageKata.participants[1] != null ? `
                     <div class="flex justify-center items-center flex-wrap gap-3 bg-blue-100 p-4 rounded-lg">
@@ -415,6 +416,32 @@ const handlerRenderMatch = () => {
                             <input id="g-1-5" type="text" value="${STATES.stageKata.participants[1]?.g5 != 0 ? STATES.stageKata.participants[1]?.g5 : ''}" onchange="handlerSetGrade(1, 5)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J5" />
                         </div>
                     </div>
+                ` : ''
+            }
+            ${
+                STATES.stageKata.participants[0] != null ? `
+                    <div class="flex justify-center items-center flex-wrap gap-3 bg-red-100 p-4 rounded-lg">
+                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
+                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c1 ? 'checked' : ''} onclick="handlerToggleField(0, 1)" class="w-4 h-4 m-3">
+                            <input id="g-0-1" type="text" value="${STATES.stageKata.participants[0]?.g1 != 0 ? STATES.stageKata.participants[0]?.g1 : ''}" onchange="handlerSetGrade(0, 1)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J1" />
+                        </div>
+                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
+                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c2 ? 'checked' : ''} onclick="handlerToggleField(0, 2)" class="w-4 h-4 m-3">
+                            <input id="g-0-2" type="text" value="${STATES.stageKata.participants[0]?.g2 != 0 ? STATES.stageKata.participants[0]?.g2 : ''}" onchange="handlerSetGrade(0, 2)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J2" />
+                        </div>
+                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
+                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c3 ? 'checked' : ''} onclick="handlerToggleField(0, 3)" class="w-4 h-4 m-3">
+                            <input id="g-0-3" type="text" value="${STATES.stageKata.participants[0]?.g3 != 0 ? STATES.stageKata.participants[0]?.g3 : ''}" onchange="handlerSetGrade(0, 3)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J3" />
+                        </div>
+                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
+                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c4 ? 'checked' : ''} onclick="handlerToggleField(0, 4)" class="w-4 h-4 m-3">
+                            <input id="g-0-4" type="text" value="${STATES.stageKata.participants[0]?.g4 != 0 ? STATES.stageKata.participants[0]?.g4 : ''}" onchange="handlerSetGrade(0, 4)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J4" />
+                        </div>
+                        <div class="flex bg-white shadowed rounded-md overflow-hidden">
+                            <input type="checkbox" ${STATES.stageKata.participants[0]?.c5 ? 'checked' : ''} onclick="handlerToggleField(0, 5)" class="w-4 h-4 m-3">
+                            <input id="g-0-5" type="text" value="${STATES.stageKata.participants[0]?.g5 != 0 ? STATES.stageKata.participants[0]?.g5 : ''}" onchange="handlerSetGrade(0, 5)" class="bg-[#f5f5f5] w-5em appearance-none border-none outline-none focus:ring-0 rounded-e-md text-gray-900 focus:border-none text-sm px-2" placeholder="J5" />
+                        </div>
+                    </div>                
                 ` : ''
             }
         </div>
@@ -485,9 +512,13 @@ const handlerRenderFormModal = () => {
             <datalist id="participant-2-list">
                 ${participants}
             </datalist>
+            <div class="flex items-center justify-end mb-6">
+                <label for="is-final" class="text-blue-500 mr-2">Satu per satu ? </label>
+                <input id="is-final" type="checkbox" class="mr-2 w-4 h-4">
+            </div>
             <div class="flex justify-end gap-2">
-                <button class="bg-red-500 px-4 py-2 rounded shadow-md text-white" onclick="handlerCloseModal()">Batal</button>
                 <button class="bg-green-500 px-4 py-2 rounded shadow-md text-white" onclick="handlerCloseModal(true)">Lanjut</button>
+                <button class="bg-red-500 px-4 py-2 rounded shadow-md text-white" onclick="handlerCloseModal()">Batal</button>
             </div>
         </div>
     `

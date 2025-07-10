@@ -18,8 +18,8 @@ const handlerGetAllParticipants = async () => {
     const data = await res?.json()
 
     if (data?.statusCode == 200) {
-        STATES.participants = data.data
-        STATES.categories = [...new Set(data?.data?.filter(d => d?.category?.includes("KATA")).map(d => d?.category))];
+        STATES.participants = data.data?.participants
+        STATES.categories = [...new Set(data?.data?.participants?.filter(d => d?.category?.includes("KATA")).map(d => d?.category))];
     }
 }
 

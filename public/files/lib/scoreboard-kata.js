@@ -9,19 +9,23 @@ let intervalId = null
 // Renders
 
 const renderContent = () => {
+
+    const showP1 = !(STATES.match?.is_final && STATES.match.active_player == 1)
+    const showP2 = !(STATES.match?.is_final && STATES.match.active_player == 0)
+
     
     document.getElementById("content").innerHTML = `
 
         ${
-            STATES.match.participants[0] != null  ? `
-                <div class="flex h-[${STATES.match.participants[1] == null ? '70%' : '35%'}] justify-between bg-gradient-to-r from-red-500 to-black p-4">
-                    <div class="flex flex-1 flex-col px-8 pb-8 ${STATES.match.participants[1] == null ? 'justify-center' : 'justify-between'}">
-                        <div class="flex flex-col ${STATES.match.participants[1] == null ? 'items-center justify-center' : ''}">
+            showP1 ? `
+                <div class="flex h-[${STATES.match?.is_final ? '70%' : '35%'}] justify-between bg-gradient-to-r from-red-500 to-black p-4">
+                    <div class="flex flex-1 flex-col px-8 pb-8 ${STATES.match?.is_final ? 'justify-center' : 'justify-between'}">
+                        <div class="flex flex-col ${STATES.match?.is_final ? 'items-center justify-center' : ''}">
                             <h1 class="text-[5.5em] line-clamp-1 m-0 p-0">${STATES.match.participants[0]?.name}</h1>
                             <p class="text-[3.5em]">${STATES.match.participants[0]?.contingent}</p>
                         </div>
                         ${
-                            STATES.match.participants[1] != null ? `
+                            (!STATES.match?.is_final) ? `
                                 <div class="flex space-x-[10em] mt-4 px-4">
                                     <div class="flex relative">
                                         <span class="text-[3.2em] font-semibold text-yellow-400">${STATES.match.participants[0]?.g1}</span>
@@ -77,29 +81,29 @@ const renderContent = () => {
                             ` : ''
                         }
                     </div>
-                    <div class="flex flex-col justify-center items-center">
-                        ${
-                            STATES.match.participants[1] != null ? `
+                    ${
+                        !STATES.match?.is_final ? `
+                            <div class="flex flex-col justify-center items-center">
                                 <div class="relative">
                                     <h1 id="0-point" class="text-[16em] font-bold text-red-500 mx-10">${STATES.match.participants[0]?.point}</h1>
                                 </div>
-                            ` : ''
-                        }
-                    </div>
+                            </div>
+                        ` : ''
+                    }
                 </div>
             ` : ''
         }
         
         ${
-            STATES.match.participants[1] != null ? `
-                <div class="flex h-[${STATES.match.participants[0] == null ? '70%' : '35%'}] justify-between bg-gradient-to-r from-blue-500 to-black p-4">
-                    <div class="flex flex-1 flex-col px-8 pb-8 ${STATES.match.participants[0] == null ? 'justify-center items-center' : 'justify-between'}">
-                        <div class="flex flex-col ${STATES.match.participants[0] == null ? 'items-center justify-center' : ''}">
+            showP2 ? `
+                <div class="flex h-[${STATES.match?.is_final ? '70%' : '35%'}] justify-between bg-gradient-to-r from-blue-500 to-black p-4">
+                    <div class="flex flex-1 flex-col px-8 pb-8 ${STATES.match?.is_final ? 'justify-center items-center' : 'justify-between'}">
+                        <div class="flex flex-col ${STATES.match?.is_final ? 'items-center justify-center' : ''}">
                             <h1 class="text-[5.5em] line-clamp-1 m-0 p-0">${STATES.match.participants[1]?.name}</h1>
                             <p class="text-[3.5em]">${STATES.match.participants[1]?.contingent}</p>
                         </div>
                        ${
-                            STATES.match.participants[0] != null ? `
+                            (!STATES.match?.is_final) ? `
                                 <div class="flex space-x-[10em] mt-4 px-4">
                                     <div class="flex relative">
                                         <span class="text-[3.2em] font-semibold text-yellow-400">${STATES.match.participants[1]?.g1}</span>
@@ -155,15 +159,15 @@ const renderContent = () => {
                             ` : ''
                        }
                     </div>
-                    <div class="flex flex-col justify-center items-center">
-                        ${
-                            STATES.match.participants[0] != null ? `
+                    ${
+                        !STATES.match?.is_final ? `
+                            <div class="flex flex-col justify-center items-center">
                                 <div class="relative">
                                     <h1 id="1-point" class="text-[16em] font-bold text-blue-500 mx-10">${STATES.match.participants[1]?.point}</h1>
-                                </div>                            
-                            ` : ''
-                        }
-                    </div>
+                                </div>          
+                            </div>
+                        ` : ''
+                    }
                 </div>
             ` : ''
         }

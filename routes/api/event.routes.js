@@ -2,6 +2,10 @@ const Joi = require('joi');
 const conf = require('./api.config')
 const { FETCH_REQUEST_TYPES, RES_TYPES } = require('../../types')
 const db = require('../../services/db')
+const ExcelJS = require('exceljs')
+const path = require('path')
+const os = require('os')
+const fs = require('fs')
 const abs_path = conf.base_path + '/event'
 
 // Handlers
@@ -112,6 +116,264 @@ const handlerDeleteEvent = async (req, res) => {
     }
 } 
 
+const handlerExportRecapitulation = async (req, res) => {
+
+    const eventId = req.params.eventId;
+
+    try {
+
+        const medalByCategory = {}
+        const medalByContingent = {}
+        const matchesByCategory = {}
+
+        const event = await new Promise((resolve, reject) => {
+            db.get(`SELECT * FROM tbl_events WHERE id = ?`, [eventId], (err, row) => {
+                if (err) {
+                    console.log(err);
+                    return reject(res.response(RES_TYPES[500](err)));
+                }
+                resolve(row);
+            });
+        })
+
+        if (!event) return res.response(RES_TYPES[404]("Event not found!"));
+
+        const matches = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT 
+                    m.*, 
+                    w.id AS winner_id,
+                    w.name AS winner_name,
+                    w.contingent AS contingent
+                FROM tbl_matches m
+                LEFT JOIN tbl_participants w ON m.winner_id = w.id
+                WHERE m.event_id = ? ORDER BY m.create_at DESC
+            `, [eventId], (err, rows) => {
+                if (err) {
+                    console.log(err);
+                    return reject(res.response(RES_TYPES[500](err)));
+                }
+
+                const matchesWithWinner = rows.map(row => {
+                    const { winner_id, winner_name, contingent, ...matchData } = row;
+                    return {
+                        ...matchData,
+                        winner: winner_id ? {
+                            id: winner_id,
+                            name: winner_name,
+                            contingent: contingent
+                        } : null
+                    };
+                });
+
+                resolve(matchesWithWinner);
+            });
+        });
+
+        matches.forEach(match => {
+            if (match.winner != null) {
+                if (matchesByCategory[match.category]) matchesByCategory[match.category].push(match)
+                else matchesByCategory[match.category] = [match]
+            }
+        })
+
+        Object.keys(matchesByCategory).forEach((category) => {
+            const matches = matchesByCategory[category]
+            medalByCategory[category] = []
+            matches?.forEach(match => {
+                if (medalByCategory[category]?.length < 4) {
+                    if (!medalByCategory[category]?.find(m => m.id == match.winner.id)) medalByCategory[category].push(match.winner)
+                }
+            })
+        })
+
+        Object.keys(medalByCategory).forEach((category) => {
+            const winners = medalByCategory[category]
+            winners?.forEach((winner, index) => {
+                if (medalByContingent[winner.contingent]) {
+                    if (index == 0) medalByContingent[winner.contingent].gold = medalByContingent[winner.contingent].gold + 1
+                    else if (index == 1) medalByContingent[winner.contingent].gold = medalByContingent[winner.contingent].silver + 1
+                    else if (index > 1) medalByContingent[winner.contingent].gold = medalByContingent[winner.contingent].bronze + 1
+                } else medalByContingent[winner.contingent] = {
+                    gold: index == 0 ? 1 : 0,
+                    silver: index == 1 ? 1 : 0,
+                    bronze: index > 1 ? 1 : 0
+                }
+            })
+        })
+
+        const workbook = new ExcelJS.Workbook();
+
+        const setCellStyle = (cell, options = {}, index) => {
+            cell.font = options.font || { size: 12 };
+            cell.alignment = options.alignment || { vertical: 'middle', horizontal: 'center', wrapText: true };
+            if (index > 1) cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+            if (options.fill) cell.fill = options.fill;
+        };
+
+        const worksheetMedalByContingent = workbook.addWorksheet('REKAPITULASI PER KONTINGEN');
+        worksheetMedalByContingent.columns = [
+            { width: 10 },
+            { width: 4 },
+            { width: 40 },
+            { width: 14 },
+            { width: 14 },
+            { width: 16 },
+            { width: 10 },
+        ];
+
+        const titleSheet1 = worksheetMedalByContingent.addRow(['', 'PEROLEHAN MEDALI JUARA UMUM', '']);
+        worksheetMedalByContingent.mergeCells(`B${titleSheet1.number}:F${titleSheet1.number}`);
+        const titleMainCell1 = titleSheet1.getCell(2);
+        titleMainCell1.font = { size: 16, bold: true };
+        titleMainCell1.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        const titleSubtitle1 = worksheetMedalByContingent.addRow(['', event.name, '']);
+        worksheetMedalByContingent.mergeCells(`B${titleSubtitle1.number}:F${titleSubtitle1.number}`);
+        const subtitleCell1 = titleSubtitle1.getCell(2);
+        subtitleCell1.font = { size: 14, bold: true };
+        subtitleCell1.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        const imageBuffer = fs.readFileSync(path.join(__dirname, '../../public/icons/logo.png'));
+        const imageId = workbook.addImage({
+            buffer: imageBuffer,
+            extension: 'png'
+        });
+        worksheetMedalByContingent.addImage(imageId, {
+            tl: { col: 1, row: 0 },
+            ext: { width: 80, height: 80 },
+        });
+
+        worksheetMedalByContingent.addRow([]);
+
+        const headerRow1 = worksheetMedalByContingent.addRow(['', 'NO', 'KONTINGEN', 'EMAS', 'PERAK', 'PERUNGGU']);
+        headerRow1.eachCell((cell, colNumber) => {
+            if (colNumber === 1) setCellStyle(cell, { font: { size: 12 }, alignment: { horizontal: 'center', vertical: 'middle' } }, colNumber);
+            else {
+                setCellStyle(cell, {
+                    font: { bold: true },
+                    alignment: { horizontal: 'center', vertical: 'middle' },
+                    fill: {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: colNumber == 4 ? 'FFFFD700' : colNumber == 5 ? 'FFC0C0C0' : colNumber == 6 ? 'FFCD7F32' : 'FF91C8E4' }
+                    }
+                }, colNumber);
+            }
+        });
+
+        Object.keys(Object.fromEntries(Object.entries(medalByContingent).sort((a, b) => b[1].gold - a[1].gold))).map((contingent, index) => {
+            const medals = medalByContingent[contingent];
+            const row = worksheetMedalByContingent.addRow(['', index+1, contingent, medals.gold || '', medals.silver || '', medals.bronze || '']);
+            row.eachCell((cell, colNumber) => {
+                setCellStyle(cell, {
+                    alignment: {
+                        horizontal: 'center',
+                        vertical: 'middle',
+                        wrapText: true
+                    }
+                }, colNumber);
+            });
+        });
+
+        worksheetMedalByContingent.addRow(['', '', '', '', '', '', '']);
+
+        const worksheetMedalByCategory = workbook.addWorksheet('REKAPITULASI PER KATEGORI');
+        worksheetMedalByCategory.columns = [
+            { width: 10 },
+            { width: 50 },
+            { width: 30 },
+            { width: 12 },
+            { width: 10 },
+        ];
+
+        const titleSheet = worksheetMedalByCategory.addRow(['', 'REKAPITULASI MEDALI', '']);
+        worksheetMedalByCategory.mergeCells(`B${titleSheet.number}:D${titleSheet.number}`);
+        const titleMainCell = titleSheet.getCell(2);
+        titleMainCell.font = { size: 16, bold: true };
+        titleMainCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        const titleSubtitle = worksheetMedalByCategory.addRow(['', event.name, '']);
+        worksheetMedalByCategory.mergeCells(`B${titleSubtitle.number}:D${titleSubtitle.number}`);
+        const subtitleCell = titleSubtitle.getCell(2);
+        subtitleCell.font = { size: 14, bold: true };
+        subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        worksheetMedalByCategory.addImage(imageId, {
+            tl: { col: 1, row: 0 },
+            ext: { width: 80, height: 80 },
+        });
+
+        worksheetMedalByCategory.addRow([]);
+
+        Object.keys(medalByCategory).sort().forEach((category) => {
+
+            const winners = medalByCategory[category];
+    
+            const titleRow = worksheetMedalByCategory.addRow(['', category]);
+            worksheetMedalByCategory.mergeCells(`B${titleRow.number}:D${titleRow.number}`);
+            const titleCell = titleRow.getCell(2);
+            titleCell.font = { bold: true, size: 14 };
+            titleCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+            const headerRow = worksheetMedalByCategory.addRow(['', 'NAMA', 'KONTINGEN', 'JUARA']);
+            headerRow.eachCell((cell, colNumber) => {
+                if (colNumber === 1) setCellStyle(cell, { font: { size: 12 }, alignment: { horizontal: 'center', vertical: 'middle' } }, colNumber);
+                else {
+                    setCellStyle(cell, {
+                        font: { bold: true },
+                        alignment: { horizontal: 'center', vertical: 'middle' },
+                        fill: {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'ffffce00' }
+                        }
+                    }, colNumber);
+                }
+            });
+
+            winners.forEach((winner, index) => {
+                let juara = index === 0 ? 'EMAS' : index === 1 ? 'PERAK' : 'PERUNGGU';
+                const row = worksheetMedalByCategory.addRow(['', winner.name, winner.contingent, juara]);
+                row.eachCell((cell, colNumber) => {
+                    const isNameColumn = colNumber === 2;
+                    setCellStyle(cell, {
+                        alignment: {
+                            horizontal: isNameColumn ? 'left' : 'center',
+                            vertical: 'middle',
+                            wrapText: true
+                        }
+                    }, colNumber);
+                });
+            });
+
+            worksheetMedalByCategory.addRow([]);
+        });
+
+        worksheetMedalByCategory.addRow(['', '', '', '', '']);
+
+        const tmpFilePath = path.join(os.tmpdir(), `rekapitulasi-medali-${Date.now()}.xlsx`);
+        await workbook.xlsx.writeFile(tmpFilePath);
+
+        const fileStream = fs.createReadStream(tmpFilePath);
+
+        return res.response(fileStream)
+        .type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        .header(
+            'Content-Disposition',
+            `attachment; filename="rekap_medali_${event.name?.replace(/\s/g, '_')}.xlsx"`
+        );
+    } catch (error) {
+        console.log(error)
+        return res.response(RES_TYPES[500]())
+    }
+}
+
 // Routing
 
 const routes = [
@@ -134,6 +396,11 @@ const routes = [
             },
         },
         handler: handlerCreateEvent
+    },
+    {
+        method: FETCH_REQUEST_TYPES.GET,
+        path: abs_path + "/export-recap/{eventId}",
+        handler: handlerExportRecapitulation
     },
     {
         method: FETCH_REQUEST_TYPES.DELETE,

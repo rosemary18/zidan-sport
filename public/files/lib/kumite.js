@@ -20,8 +20,8 @@ const handlerGetAllParticipants = async () => {
     const data = await res?.json()
 
     if (data?.statusCode == 200) {
-        STATES.participants = data.data
-        STATES.categories = [...new Set(data?.data?.filter(d => d?.category?.includes("KUMITE")).map(d => d?.category))];
+        STATES.participants = data.data.participants
+        STATES.categories = [...new Set(data?.data?.participants?.filter(d => d?.category?.includes("KUMITE")).map(d => d?.category))];
     }
 }
 
@@ -318,18 +318,18 @@ const handlerRenderMatch = () => {
     document.getElementById("match-content").innerHTML = `
         <div class="flex text-white">
             <div class="flex flex-1 flex-col justify-center items-center p-10 min-h-[30em] bg-blue-600 mr-3 rounded-md relative">
-                <div class="absolute bottom-4 left-4 flex items-center justify-center">
-                    <input id="w-2" type="checkbox" onclick="handlerToggleCheckbox(2)" class="w-5 h-5 mr-2 shadowed">
+                <div class="absolute bottom-4 right-4 flex items-center justify-center">
                     <span class="text-xl">🏆</span>
+                    <input id="w-2" type="checkbox" onclick="handlerToggleCheckbox(2)" class="w-5 h-5 ml-2 shadowed">
                 </div>
                 <h1 class="text-4xl font-bold line-clamp-1">${STATES.stageKumite?.participants[1]?.name}</h1>
                 <h2 class="text-2xl font-bold">(${STATES.stageKumite?.participants[1]?.contingent})</h2>
                 <h1 class="text-[10em] font-extrabold mt-2">${STATES.stageKumite?.participants[1]?.point}</h1>
             </div>
             <div class="flex flex-1 flex-col justify-center items-center p-10 min-h-[30em] bg-red-600 ml-3 rounded-md relative">
-                <div class="absolute bottom-4 right-4 flex items-center justify-center">
+                <div class="absolute bottom-4 left-4 flex items-center justify-center">
+                    <input id="w-1" type="checkbox" onclick="handlerToggleCheckbox(1)" class="w-5 h-5 mr-2 shadowed">
                     <span class="text-xl">🏆</span>
-                    <input id="w-1" type="checkbox" onclick="handlerToggleCheckbox(1)" class="w-5 h-5 ml-2 shadowed">
                 </div>
                 <h1 class="text-4xl font-bold line-clamp-1">${STATES.stageKumite?.participants[0]?.name}</h1>
                 <h2 class="text-2xl font-bold">(${STATES.stageKumite?.participants[0]?.contingent})</h2>

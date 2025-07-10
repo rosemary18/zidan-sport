@@ -523,6 +523,9 @@ const handlerUpdateBracket = async () => {
 
 const handlerReshuffleBrackets = () => {
 
+    let conf = confirm("Apakah anda yakin ingin mengacak kembali pertandingan?")
+    if (!conf) return
+
     STATES.brackets = generateBracket(STATES.participants, STATES.brackets?.length <= 16 ? bracket16 : bracket32)
     // STATES.brackets = generateBracket(STATES.participants, bracket32)
     handlerUpdateBracket()
@@ -587,7 +590,7 @@ const handlerCheckMatch = () => {
             if (expect[0].participant != null && expect[1].participant != null) {
                 const expectPids = expect.map(p => p.participant.id)
                 STATES.matches.forEach((match, j) => {
-                    if (expectPids.includes(match.participants[0].id) && expectPids.includes(match.participants[1].id)) {
+                    if (expectPids.includes(match.participants?.[0]?.id) && expectPids.includes(match.participants?.[1]?.id)) {
                         const winner = expect[0].participant.id == match.winner_id ? expect[0].participant : expect[1].participant
                         if (expect[0].coordinate == '') STATES.winners[0] = winner
                         else {
@@ -1110,14 +1113,17 @@ const handlerOnload = async () => {
     await handlerGetBracket()
     await handlerGetMatches()
 
-    if (!STATES.bracket_id) {
-        STATES.brackets = generateBracket(STATES.participants, STATES.participants.length <= 16 ? bracket16 : bracket32)
-        await handlerCreateBracket()
-    } else renderBracket()
-
-    handlerCheckMatch()
-
-    document.getElementById("loadingModal").classList.add("hidden")
+    setTimeout(async () => {
+        
+        if (!STATES.bracket_id) {
+            STATES.brackets = generateBracket(STATES.participants, STATES.participants.length <= 16 ? bracket16 : bracket32)
+            await handlerCreateBracket()
+        } else renderBracket()
+    
+        handlerCheckMatch()
+    
+        document.getElementById("loadingModal").classList.add("hidden")
+    }, 1000);
 }
 
 window.addEventListener("load", handlerOnload)

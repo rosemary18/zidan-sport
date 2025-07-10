@@ -35,7 +35,51 @@ const handlerGetParticipantByEventId = async (req, res) => {
         });
     })
 
-    return res.response(RES_TYPES[200](participants));
+    try {
+
+        const sql_categories = `
+            SELECT DISTINCT category 
+            FROM tbl_participants 
+            WHERE event_id = ?
+            ORDER BY category ASC
+        `;
+
+        const categories = await new Promise((resolve, reject) => {
+            db.all(sql_categories, [eventId], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+
+        const results = await Promise.all(
+            categories.map(async (cat) => {
+                const sql_check_bracket = `
+                    SELECT 1 FROM tbl_brackets 
+                    WHERE event_id = ? AND category = ? 
+                    LIMIT 1
+                `;
+                const hasBracket = await new Promise((resolve, reject) => {
+                    db.get(sql_check_bracket, [eventId, cat.category], (err, row) => {
+                        if (err) return reject(err);
+                        resolve(!!row);
+                    });
+                });
+
+                return {
+                    category: cat.category,
+                    hasBracket,
+                };
+            })
+        );
+
+        return res.response(RES_TYPES[200]({
+            participants,
+            categories: results
+        }));
+    } catch (error) {
+        console.error(error);
+        return res.response(RES_TYPES[500]("Server error saat mengambil kategori & bracket"));
+    }
 }
 
 const handlerGetParticipantByCategory = async (req, res) => {

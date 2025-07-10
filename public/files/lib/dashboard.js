@@ -93,12 +93,39 @@ const handlerGetAllParticipants = async () => {
 
     if (data?.statusCode == 200) {
 
-        STATES.participants = data.data
-        STATES.filteredParticipants = data.data
-        STATES.categories = [...new Set(data?.data?.map(d => d?.category))];
+        STATES.participants = data.data.participants
+        STATES.filteredParticipants = data.data.participants
+        STATES.categories = data.data.categories
         
         handlerRenderTable()
     }
+}
+
+const handlerExportMedali = async () => {
+    
+    const response = await fetch(`/api/event/export-recap/${STATES.event.id}`);
+
+    if (!response.ok) {
+        console.error('Failed to fetch file');
+        return;
+    }
+
+    const blob = await response.blob();
+
+    console.log('Blob size:', blob.size);
+    if(blob.size === 0) {
+        console.error('Received empty file');
+        return;
+    }
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rekap_medali_event_${STATES.event.name?.replace(/[\s]/g, '_')}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    window.URL.revokeObjectURL(url);
 }
 
 // Renders
@@ -127,7 +154,7 @@ const handlerRenderCategory = () => {
     let options = '';
 
     STATES.categories.forEach(d => {
-        options += `<option value="${d}">${d}</option>`;
+        options += `<option value="${d.category}">${d.category}</option>`;
     })
 
     category.innerHTML = `
@@ -136,6 +163,12 @@ const handlerRenderCategory = () => {
             ${options}
         </datalist>
     `;
+}
+
+const handlerCheckBracketCategory = () => {
+
+    const category = STATES.categories.find(d => d.category == document.getElementById("category").value)
+    if (document.getElementById("bracket-status")) document.getElementById("bracket-status").textContent = category?.hasBracket ? 'Bagan telah di set!' : ''
 }
 
 const handlerRenderTable = () => {
@@ -234,6 +267,7 @@ const handlerFilterTable = (type) => {
 
     STATES.currentPage = 1;
     handlerRenderTable();
+    handlerCheckBracketCategory()
 }
 
 const handlerDeleteParticipant = async (id) => {

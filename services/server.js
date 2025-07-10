@@ -29,7 +29,7 @@ const server = async () => {
     // Start services
     await app
         .start()
-        .then(() => console.log(`[APP]: Service available on ${app.info.uri}, lets rock n roll ...`))
+        .then(() => console.log(`[APP]: Service available on http://localhost:${app.info.port}, lets rock n roll ...`))
         .catch((err) => console.log(`Service failed to start... \n ${err}`))
     
     socket.listenSocket(app);
