@@ -749,9 +749,9 @@ const handlerDrop = (event) => {
         indexes = draggedItem.id.split("-")
         data = STATES.brackets[indexes[0]][indexes[1]][indexes[2]].participant
 
-        if (data == null || (indexes?.[0] > targetIndexes?.[0])) return
+        if (data == null) return
         
-        if (indexes?.[0] == targetIndexes?.[0]) {
+        if (indexes?.[0] >= targetIndexes?.[0]) {
             
             // Swap data
             let temp = STATES.brackets[targetIndexes[0]][targetIndexes[1]][targetIndexes[2]].participant

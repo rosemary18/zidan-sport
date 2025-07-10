@@ -138,16 +138,57 @@ const handlerExportRecapitulation = async (req, res) => {
 
         if (!event) return res.response(RES_TYPES[404]("Event not found!"));
 
+        const contingents = await new Promise((resolve, reject) => {
+            db.all(`SELECT DISTINCT contingent FROM tbl_participants WHERE event_id = ?`, [eventId], (err, rows) => {
+                if (err) {
+                    console.log(err);
+                    return reject(res.response(RES_TYPES[500](err)));
+                }
+                resolve(rows);
+            });
+        })
+
+        contingents.forEach(contingent => {
+            medalByContingent[contingent.contingent] = {
+                gold: 0,
+                silver: 0,
+                bronze: 0
+            }
+        })
+
         const matches = await new Promise((resolve, reject) => {
             db.all(`
                 SELECT 
-                    m.*, 
-                    w.id AS winner_id,
+                    e.id, 
+                    e.event_id,
+                    e.category,
+                    e.match_type,
+                    e.winner_id,
                     w.name AS winner_name,
-                    w.contingent AS contingent
-                FROM tbl_matches m
-                LEFT JOIN tbl_participants w ON m.winner_id = w.id
-                WHERE m.event_id = ? ORDER BY m.create_at DESC
+                    w.contingent AS contingent,
+                    e.arena,
+                    e.time,
+                    e.create_at,
+                    (
+                        SELECT COALESCE(
+                            json_group_array(
+                                json_object(
+                                    'id', b.id,
+                                    'name', b.name,
+                                    'contingent', b.contingent,
+                                    'grade', mp.grade
+                                )
+                            ),
+                            '[]'
+                        )
+                        FROM tbl_match_participants mp
+                        JOIN tbl_participants b ON b.id = mp.participant_id
+                        WHERE mp.match_id = e.id
+                    ) AS participants
+                FROM tbl_matches e
+                LEFT JOIN tbl_participants w ON w.id = e.winner_id
+                WHERE e.event_id = ?
+                ORDER BY e.create_at DESC;
             `, [eventId], (err, rows) => {
                 if (err) {
                     console.log(err);
@@ -155,9 +196,10 @@ const handlerExportRecapitulation = async (req, res) => {
                 }
 
                 const matchesWithWinner = rows.map(row => {
-                    const { winner_id, winner_name, contingent, ...matchData } = row;
+                    const { winner_id, winner_name, contingent, participants, ...matchData } = row;
                     return {
                         ...matchData,
+                        participants: JSON.parse(participants),
                         winner: winner_id ? {
                             id: winner_id,
                             name: winner_name,
@@ -182,7 +224,10 @@ const handlerExportRecapitulation = async (req, res) => {
             medalByCategory[category] = []
             matches?.forEach(match => {
                 if (medalByCategory[category]?.length < 4) {
-                    if (!medalByCategory[category]?.find(m => m.id == match.winner.id)) medalByCategory[category].push(match.winner)
+                    if (!medalByCategory[category]?.find(m => match?.winner_id == m.id)) medalByCategory[category].push(match.winner)
+                    match?.participants?.forEach(participant => {
+                        if (participant?.id != match?.winner_id && !medalByCategory[category]?.find(m => participant?.id == m.id)) medalByCategory[category].push(participant)
+                    })
                 }
             })
         })
@@ -192,8 +237,8 @@ const handlerExportRecapitulation = async (req, res) => {
             winners?.forEach((winner, index) => {
                 if (medalByContingent[winner.contingent]) {
                     if (index == 0) medalByContingent[winner.contingent].gold = medalByContingent[winner.contingent].gold + 1
-                    else if (index == 1) medalByContingent[winner.contingent].gold = medalByContingent[winner.contingent].silver + 1
-                    else if (index > 1) medalByContingent[winner.contingent].gold = medalByContingent[winner.contingent].bronze + 1
+                    else if (index == 1) medalByContingent[winner.contingent].silver = medalByContingent[winner.contingent].silver + 1
+                    else if (index > 1) medalByContingent[winner.contingent].bronze = medalByContingent[winner.contingent].bronze + 1
                 } else medalByContingent[winner.contingent] = {
                     gold: index == 0 ? 1 : 0,
                     silver: index == 1 ? 1 : 0,
